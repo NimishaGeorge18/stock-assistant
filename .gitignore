@@ -1,0 +1,12 @@
+# secrets — never push these
+.env
+
+# screenshots and logs are local only
+screenshots/*.png
+logs/*.log
+
+# Python noise
+__pycache__/
+*.pyc
+.DS_Store
+venv/

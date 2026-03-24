@@ -1,0 +1,6 @@
+anthropic
+mss
+Pillow
+python-telegram-bot
+schedule
+python-dotenv
