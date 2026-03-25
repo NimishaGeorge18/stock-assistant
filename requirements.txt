@@ -3,4 +3,7 @@ mss
 Pillow
 python-telegram-bot
 schedule
-python-dotenv
+python-dotenvyfinance
+google-generativeai
+google-genai
+pytz
