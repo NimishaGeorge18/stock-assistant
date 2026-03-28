@@ -51,6 +51,45 @@ def send_all_alerts(analyses: list):
             for analysis in analyses:
                 send_alert(analysis, chat_id)
 
+def send_daily_summary():
+    from database import get_todays_summary
+    data = get_todays_summary()
+    date = data["date"]
+    total = data["total_scans"]
+
+    lines = [f"📊 *Daily Summary — {date}*", "━━━━━━━━━━━━━━━"]
+
+    for stock, info in data["stocks"].items():
+        lines.append(f"\n*{stock}*")
+        lines.append(
+            f"  Signals: {info['buy']} BUY · "
+            f"{info['sell']} SELL · "
+            f"{info['hold']} HOLD"
+        )
+        if info["best"]:
+            b = info["best"]
+            lines.append(
+                f"  Best: {b['signal']} at "
+                f"₹{b['entry']} → ₹{b['target']}"
+            )
+        else:
+            lines.append("  No BUY/SELL signals today")
+
+    lines.append("\n━━━━━━━━━━━━━━━")
+    lines.append(f"Total scans today: {total}")
+
+    message = "\n".join(lines)
+
+    for chat_id in CHAT_IDS:
+        if chat_id:
+            url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+            requests.post(url, data={
+                "chat_id": chat_id,
+                "text": message,
+                "parse_mode": "Markdown"
+            })
+            print(f"Daily summary sent to {chat_id}")
+
 if __name__ == "__main__":
     from data_fetcher import get_all_stocks
     from analyzer import analyze_all

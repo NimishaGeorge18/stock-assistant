@@ -5,7 +5,7 @@ import pytz
 
 from data_fetcher import get_all_stocks
 from analyzer import analyze_all
-from alerter import send_all_alerts
+from alerter import send_all_alerts, send_daily_summary
 from database import save_all_signals, init_db
 
 IST = pytz.timezone("Asia/Kolkata")
@@ -35,15 +35,24 @@ def run_scan():
     except Exception as e:
         print(f"ERROR during scan: {e}")
 
+def run_daily_summary():
+    now = datetime.now(IST)
+    # only send on weekdays
+    if now.weekday() < 5:
+        print("\nSending daily summary...")
+        send_daily_summary()
+
 if __name__ == "__main__":
     init_db()
     print("Stock Assistant started!")
-    print("Scanning every 1 minute during market hours (9:15am - 3:30pm IST)")
+    print("Scanning every 1 minute during market hours")
+    print("Daily summary at 3:30 PM IST")
     print("Press Ctrl+C to stop\n")
 
     run_scan()
 
     schedule.every(1).minutes.do(run_scan)
+    schedule.every().day.at("10:00").do(run_daily_summary)  
 
     while True:
         schedule.run_pending()

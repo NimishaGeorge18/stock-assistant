@@ -72,6 +72,57 @@ def get_last_signal(stock: str) -> dict:
         }
     return None
 
+def get_todays_summary() -> dict:
+    today = datetime.now().strftime("%Y-%m-%d")
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    stocks = ["ITC", "RELIANCE", "ONGC"]
+    summary = {}
+    total_scans = 0
+
+    for stock in stocks:
+        cursor.execute('''
+            SELECT signal, entry, target, stop_loss
+            FROM signals
+            WHERE stock = ? AND timestamp LIKE ?
+            ORDER BY timestamp ASC
+        ''', (stock, f"{today}%"))
+
+        rows = cursor.fetchall()
+        total_scans += len(rows)
+
+        buy_count = sum(1 for r in rows if r[0] == "BUY")
+        sell_count = sum(1 for r in rows if r[0] == "SELL")
+        hold_count = sum(1 for r in rows if r[0] == "HOLD")
+
+        # find best signal (biggest potential reward)
+        best = None
+        best_reward = 0
+        for row in rows:
+            signal, entry, target, sl = row
+            if signal in ("BUY", "SELL"):
+                reward = abs(target - entry)
+                if reward > best_reward:
+                    best_reward = reward
+                    best = {
+                        "signal": signal,
+                        "entry": entry,
+                        "target": target,
+                        "stop_loss": sl
+                    }
+
+        summary[stock] = {
+            "buy": buy_count,
+            "sell": sell_count,
+            "hold": hold_count,
+            "best": best,
+            "total": len(rows)
+        }
+
+    conn.close()
+    return {"stocks": summary, "total_scans": total_scans, "date": today}
+
 if __name__ == "__main__":
     init_db()
     print("Database initialized successfully")
